@@ -1,0 +1,85 @@
+<div class="bg-gray-900 border border-gray-700 shadow-xl p-5 min-h-[calc(100vh-75px)]">
+  <h3 class="text-lg font-semibold text-white mb-2">Upload image</h3>
+
+
+  <div class="max-w-lg mx-auto space-y-6">
+
+    <div class="flex gap-4 mb-6">
+
+      <button (click)="cameraActive() ? capture() : toggleCamera()"
+        class="flex-1 p-4 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-600 transition-colors">
+        <svg class="w-6 h-6 mx-auto mb-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span class="text-gray-300">
+          {{ cameraActive() ? 'Capture Photo' : 'Take Photo' }}
+        </span>
+      </button>
+
+
+
+      <div class="relative flex-1" (click)="fileInput.click()">
+        <button class="w-full p-4 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-600 transition-colors">
+          <svg class="w-6 h-6 mx-auto mb-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span class="text-gray-300">Upload Image</span>
+        </button>
+      </div>
+
+    </div>
+
+
+
+
+
+
+    <!-- Name Input -->
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-2">User Name</label>
+      <input type="text" [(ngModel)]="userName"
+        class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-indigo-500 focus:border-indigo-500"
+        placeholder="Enter your name">
+    </div>
+
+    <!-- Upload Controls -->
+    <div class="mt-6 flex items-center justify-end gap-3">
+      <button class="px-4 py-2 text-gray-300 hover:text-white" (click)="clearAll()">
+        Clear All
+      </button>
+      <button
+        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:cursor-not-allowed"
+        [disabled]="!hasValidSubmission()" (click)="uploadImage()">
+        Send
+      </button>
+    </div>
+
+
+    <!-- Image Upload -->
+    <div>
+      <input type="file" accept="image/*" hidden #fileInput (change)="onFileSelected($event)">
+      @if (image()) {
+      <div
+        class="relative aspect-square bg-gray-800 rounded-lg border-2 border-dashed border-gray-600 hover:border-indigo-400 transition-all">
+        <img [src]="image()" alt="User profile" class="w-full h-full object-cover rounded-lg">
+      </div>
+      }
+    </div>
+
+    <!-- camera upload -->
+    <canvas #canvasElement class="hidden"></canvas>
+    <div >
+      <video #videoElement class="w-full  h-full object-cover" autoplay playsinline></video>
+    </div>
+
+
+
+
+
+
+
+  </div>
+</div>
