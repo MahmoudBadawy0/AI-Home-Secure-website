@@ -7,7 +7,7 @@ import { logedGuard } from './core/guards/loged.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'login',
+    redirectTo: 'home',
     pathMatch: 'full',
   },
 
@@ -76,11 +76,20 @@ export const routes: Routes = [
       },
 
       {
-        path: 'logs',
-        title: 'Logs',
+        path: 'history',
+        title: 'History',
         loadComponent: () =>
           import('./pages/history/history.component').then(
             (m) => m.HistoryComponent
+          ),
+      },
+
+      {
+        path: 'emergency-response',
+        title: 'Emergency Response',
+        loadComponent: () =>
+          import('./pages/theft-alert/theft-alert.component').then(
+            (m) => m.TheftAlertComponent
           ),
       },
 

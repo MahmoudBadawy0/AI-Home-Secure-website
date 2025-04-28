@@ -1,3 +1,4 @@
+import { AuthServiceService } from './../../core/services/authService/auth-service.service';
 import { isPlatformBrowser } from '@angular/common';
 import {
   Component,
@@ -20,9 +21,16 @@ import { initFlowbite } from 'flowbite';
 export class NavbarComponent implements OnInit {
   isLogedin: InputSignal<boolean> = input.required();
   private readonly ID = inject(PLATFORM_ID);
+
+  readonly AuthServiceService = inject(AuthServiceService);
+
   ngOnInit(): void {
     if (isPlatformBrowser(this.ID)) {
       initFlowbite();
     }
+  }
+
+  logOut() {
+    this.AuthServiceService.logOut();
   }
 }

@@ -126,10 +126,13 @@
           }
         </div>
 
-        <button type="submit"
-          class="w-full bg-indigo-600 text-white py-2 px-4 sm:py-2.5 sm:px-6 rounded-lg hover:bg-indigo-700 transition-colors duration-200 font-medium shadow-sm text-sm sm:text-base">
+        <button [disabled]="isLoading()" type="submit" class="form-btn">
+          @if (isLoading()) {
+          <i class="fas fa-spinner fa-spin me-2" aria-hidden="true"></i>
+          }
           Save Changes
         </button>
+
       </form>
     </div>
     }
@@ -144,11 +147,11 @@
           <!-- Current Password -->
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-1">Current Password</label>
-            <input formControlName="currentPassword" type="password" placeholder="********"
+            <input formControlName="oldPassword" type="password" placeholder="********"
               class="mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 text-sm sm:text-base placeholder-gray-400" />
 
             <!-- Error Messages -->
-            @let passwordControl = securityForm.get('currentPassword');
+            @let passwordControl = securityForm.get('oldPassword');
             @if (passwordControl?.errors && passwordControl?.touched) {
             <div class="flex items-start py-2 px-3 mt-2 text-sm text-red-500 rounded-lg bg-red-900/50" role="alert">
               <svg class="shrink-0 w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -193,10 +196,14 @@
             }
           </div>
 
-          <button type="submit"
-            class="w-full bg-indigo-600 text-white py-2 px-4 sm:py-2.5 sm:px-6 rounded-lg hover:bg-indigo-700 transition-colors duration-200 font-medium shadow-sm text-sm sm:text-base">
+          <button [disabled]="isLoading()" type="submit" class="form-btn">
+            @if (isLoading()) {
+            <i class="fas fa-spinner fa-spin me-2" aria-hidden="true"></i>
+            }
             Update Password
           </button>
+
+
         </form>
       </div>
     </div>

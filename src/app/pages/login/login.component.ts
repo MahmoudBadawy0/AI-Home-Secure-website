@@ -1,3 +1,5 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { AuthServiceService } from './../../core/services/authService/auth-service.service';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import {
   FormBuilder,
@@ -5,7 +7,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 @Component({
   selector: 'app-login',
   imports: [RouterLink, ReactiveFormsModule],
@@ -14,15 +16,16 @@ import { RouterLink } from '@angular/router';
 })
 export class LoginComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly authServiceService = inject(AuthServiceService);
+  private readonly router = inject(Router);
 
   isLoading = signal(false);
   msgError = signal('');
+  logInForm!: FormGroup;
 
   ngOnInit(): void {
     this.initForm();
   }
-
-  logInForm!: FormGroup;
 
   initForm() {
     this.logInForm = this.formBuilder.group({
@@ -49,20 +52,31 @@ export class LoginComponent implements OnInit {
   submitLogin() {
     if (this.logInForm.valid) {
       this.isLoading.set(true);
-      // this.authService.sendRegisterForm(this.registerForm.value).subscribe({
-      //   next: (res) => {
-      //     if (res.message === 'success') {
-      //       setTimeout(() => {
-      //         this.router.navigate(['/login']);
-      //       }, 500);
-      //     }
-      //     this.isLoading = false;
-      //   },
-      //   error: (err: HttpErrorResponse) => {
-      //     this.msgError = err.error.message;
-      //     this.isLoading = false;
-      //   },
-      // });
+      this.authServiceService.sendLoginForm(this.logInForm.value).subscribe({
+        next: (res) => {
+          console.log('res', res);
+          setTimeout(() => {
+            localStorage.setItem('token', res.access_token);
+            this.authServiceService.tokenDecode();
+            this.router.navigate(['/home']);
+          }, 500);
+          this.isLoading.set(false);
+        },
+        error: (err: HttpErrorResponse) => {
+          console.error('Login error', err);
+          this.isLoading.set(false);
+          let errorMessage = 'Login failed. Please try again.';
+          if (err.status === 0) {
+            errorMessage =
+              'Unable to connect to server. Please check your connection.';
+          } else if (err.status === 401) {
+            errorMessage = 'Invalid email or password.';
+          } else if (err.status >= 500) {
+            errorMessage = 'Server error. Please try again later.';
+          }
+          this.msgError.set(errorMessage);
+        },
+      });
     } else {
       this.logInForm.markAllAsTouched();
     }

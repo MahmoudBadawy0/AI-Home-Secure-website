@@ -7,6 +7,8 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { UploadImageService } from '../../core/services/uploadImage/upload-image.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-image-upload',
@@ -16,11 +18,19 @@ import { FormsModule } from '@angular/forms';
 })
 export class ImageUploadComponent {
   image = signal<string | null>(null);
+
+  isLoading = signal(false);
+
   userName = signal<string>('');
   uploadedImage = signal<File | undefined>(undefined);
+
   cameraActive = signal(false);
   errorMessage = '';
+
   private mediaStream: MediaStream | null = null;
+
+  private readonly uploadService = inject(UploadImageService);
+  private readonly toastrService = inject(ToastrService);
 
   @ViewChild('videoElement') videoElement!: ElementRef<HTMLVideoElement>;
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
@@ -32,6 +42,7 @@ export class ImageUploadComponent {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
       this.uploadedImage.set(input.files[0]);
+
       const reader = new FileReader();
       reader.onload = () => {
         this.image.set(reader.result as string);
@@ -117,28 +128,35 @@ export class ImageUploadComponent {
   }
 
   // Implement upload logic
+
   uploadImage() {
-    if (!this.uploadedImage() || !this.userName().trim()) return;
+    if (!this.hasValidSubmission()) return;
 
     const formData = new FormData();
     formData.append('image', this.uploadedImage()!);
-    formData.append('userName', this.userName().trim());
+    formData.append('memberName', this.userName().trim());
+    this.isLoading.set(true);
 
-    this.http.post('YOUR_BACKEND_URL', formData).subscribe({
+    this.uploadService.uploadImage(formData).subscribe({
       next: (response) => {
         console.log('Upload successful:', response);
+        this.toastrService.success('image sent successful', 'Success');
+        this.isLoading.set(false);
         this.clearAll();
       },
       error: (err) => {
+        this.toastrService.error('failed. Please try again.', 'Error');
+        this.isLoading.set(false);
         console.error('Upload failed:', err);
-        // Handle error
+        this.errorMessage = 'Upload failed. Please try again.';
       },
     });
   }
+
+  ngOnDestroy() {
+    this.stopCamera();
+    if (this.image()) {
+      URL.revokeObjectURL(this.image()!);
+    }
+  }
 }
-
-
-
-
-
-

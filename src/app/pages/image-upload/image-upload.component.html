@@ -50,11 +50,19 @@
       <button class="px-4 py-2 text-gray-300 hover:text-white" (click)="clearAll()">
         Clear All
       </button>
-      <button
+      <button [disabled]="isLoading()"
         class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:cursor-not-allowed"
         [disabled]="!hasValidSubmission()" (click)="uploadImage()">
+        @if (isLoading()) {
+        <i class="fas fa-spinner fa-spin me-2" aria-hidden="true"></i>
+        }
         Send
       </button>
+
+
+
+
+
     </div>
 
 
@@ -71,7 +79,7 @@
 
     <!-- camera upload -->
     <canvas #canvasElement class="hidden"></canvas>
-    <div >
+    <div>
       <video #videoElement class="w-full  h-full object-cover" autoplay playsinline></video>
     </div>
 

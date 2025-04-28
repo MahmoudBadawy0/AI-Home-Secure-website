@@ -5,7 +5,9 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { AuthServiceService } from '../../core/services/authService/auth-service.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-register',
@@ -15,6 +17,8 @@ import { RouterLink } from '@angular/router';
 })
 export class RegisterComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly authServiceService = inject(AuthServiceService);
+  private readonly router = inject(Router);
 
   isLoading = signal(false);
   msgError = signal('');
@@ -27,7 +31,7 @@ export class RegisterComponent implements OnInit {
 
   initForm() {
     this.registerForm = this.formBuilder.group({
-      name: [
+      userName: [
         null,
         [
           Validators.required,
@@ -51,9 +55,9 @@ export class RegisterComponent implements OnInit {
           Validators.pattern(/^(?=.*[A-Z])(?=.*[\W_]).{8,}$/),
         ],
       ],
-      phone: [
+      phoneNumber: [
         null,
-        [Validators.required, Validators.pattern(/^01[0125][0-9]{8}$/)],
+        [Validators.required, Validators.pattern(/^\+201[0125][0-9]{8}$/)],
       ],
     });
   }
@@ -61,20 +65,33 @@ export class RegisterComponent implements OnInit {
   submitRegister() {
     if (this.registerForm.valid) {
       this.isLoading.set(true);
-      // this.authService.sendRegisterForm(this.registerForm.value).subscribe({
-      //   next: (res) => {
-      //     if (res.message === 'success') {
-      //       setTimeout(() => {
-      //         this.router.navigate(['/login']);
-      //       }, 500);
-      //     }
-      //     this.isLoading = false;
-      //   },
-      //   error: (err: HttpErrorResponse) => {
-      //     this.msgError = err.error.message;
-      //     this.isLoading = false;
-      //   },
-      // });
+      this.authServiceService
+        .sendRegisterForm(this.registerForm.value)
+        .subscribe({
+          next: (res) => {
+            // setTimeout(() => {
+            //   this.router.navigate(['/login']);
+            // }, 500);
+            console.log('res', res);
+            this.isLoading.set(false);
+          },
+          error: (err: HttpErrorResponse) => {
+            console.error('Registration error', err);
+            let errorMessage = 'Registration failed. Please try again.';
+
+            if (err.status === 0) {
+              errorMessage =
+                'Unable to connect to server. Please check your connection.';
+            } else if (err.status === 400) {
+              errorMessage = err.error?.message || 'Invalid registration data.';
+            } else if (err.status >= 500) {
+              errorMessage = 'Server error. Please try again later.';
+            }
+
+            this.msgError.set(errorMessage);
+            this.isLoading.set(false);
+          },
+        });
     } else {
       this.registerForm.markAllAsTouched();
     }

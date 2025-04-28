@@ -38,11 +38,11 @@
           <!-- Name Inputs -->
           <div>
             <label for="UserName" class="label-field">User Name</label>
-            <input formControlName="name" id="UserName" name="UserName" type="text" class="input-field"
+            <input formControlName="userName" id="UserName" name="UserName" type="text" class="input-field"
               placeholder="John">
 
 
-            @let nameControl=registerForm.get('name');
+            @let nameControl=registerForm.get('userName');
             @if (nameControl?.errors && nameControl?.touched) {
             <div
               class="flex items-center py-2 px-3 mt-1 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
@@ -127,8 +127,9 @@
           <!-- Phone Inputs -->
           <div>
             <label for="Phone" class="label-field ">Phone Number</label>
-            <input formControlName="phone" id="Phone" type="tel" class="input-field" placeholder="0 123 456 7890">
-            @let phoneControl=registerForm.get('phone');
+            <input formControlName="phoneNumber" id="Phone" type="tel" class="input-field"
+              placeholder="+20 123 456 7890">
+            @let phoneControl=registerForm.get('phoneNumber');
             @if (phoneControl?.errors && phoneControl?.touched) {
             <div
               class="flex items-center py-2 px-3 mt-1 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
