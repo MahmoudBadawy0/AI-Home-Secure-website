@@ -69,9 +69,9 @@ export class RegisterComponent implements OnInit {
         .sendRegisterForm(this.registerForm.value)
         .subscribe({
           next: (res) => {
-            // setTimeout(() => {
-            //   this.router.navigate(['/login']);
-            // }, 500);
+            setTimeout(() => {
+              this.router.navigate(['/login']);
+            }, 500);
             console.log('res', res);
             this.isLoading.set(false);
           },

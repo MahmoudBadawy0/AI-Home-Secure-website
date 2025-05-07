@@ -1,18 +1,28 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Inject, inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { Observable } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
 import { Router } from '@angular/router';
 import { environments } from '../../environments/environments';
+import { isPlatformBrowser } from '@angular/common';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthServiceService {
   decodedToken: any;
-  token = localStorage.getItem('token');
+  private isBrowser: boolean;
 
-  constructor(private httpClient: HttpClient, private router: Router) {}
+  constructor(
+    private httpClient: HttpClient,
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+    if (this.isBrowser) {
+      this.tokenDecode();
+    }
+  }
 
   sendRegisterForm(data: object): Observable<any> {
     return this.httpClient.post(
@@ -35,20 +45,29 @@ export class AuthServiceService {
   }
 
   tokenDecode() {
-    if (localStorage.getItem('token') !== null) {
-      this.decodedToken = jwtDecode(localStorage.getItem('token')!);
+    if (this.isBrowser) {
+      if (localStorage.getItem('token') !== null) {
+        this.decodedToken = jwtDecode(localStorage.getItem('token')!);
+      }
     }
   }
 
   logOut(): void {
-    localStorage.removeItem('token');
+    if (this.isBrowser) {
+      localStorage.removeItem('token');
+    }
     this.decodedToken = null;
     this.router.navigate(['/login']);
   }
 
   changePassword(data: object): Observable<any> {
+    let token: string | null = null;
+    if (isPlatformBrowser(this.platformId)) {
+      token = localStorage.getItem('token');
+    }
+
     const headers = new HttpHeaders({
-      Authorization: `Bearer ${this.token}`,
+      Authorization: `Bearer ${token}`,
     });
     return this.httpClient.post(
       `${environments.baseUrl}/api/Account/Change-Password`,
@@ -56,31 +75,32 @@ export class AuthServiceService {
       {
         headers,
         responseType: 'text',
-        withCredentials: true
+        withCredentials: true,
       }
     );
   }
 
   // forgot password
   // verify email and send code to email
-  setVerifyEmail(data: object): Observable<any> {
-    return this.httpClient.post(
-      `${environments.baseUrl}/api/v1/auth/forgotPasswords`,
-      data
-    );
-  }
+  // setVerifyEmail(data: object): Observable<any> {
+  //   return this.httpClient.post(
+  //     `${environments.baseUrl}/api/v1/auth/forgotPasswords`,
+  //     data
+  //   );
+  // }
 
-  setVerifyCode(data: object): Observable<any> {
-    return this.httpClient.post(
-      `${environments.baseUrl}/api/v1/auth/verifyResetCode`,
-      data
-    );
-  }
+  // setVerifyCode(data: object): Observable<any> {
+  //   return this.httpClient.post(
+  //     `${environments.baseUrl}/api/v1/auth/verifyResetCode`,
+  //     data
+  //   );
+  // }
 
-  resetPassword(data: object): Observable<any> {
-    return this.httpClient.put(
-      `${environments.baseUrl}/api/v1/auth/resetPassword`,
-      data
-    );
-  }
+  // resetPassword(data: object): Observable<any> {
+  //   return this.httpClient.put(
+  //     `${environments.baseUrl}/api/v1/auth/resetPassword`,
+  //     data
+  //   );
+  // }
+  
 }

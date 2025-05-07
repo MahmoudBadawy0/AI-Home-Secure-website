@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { EmergencyTriggerService } from '../../core/services/emergencyTrigger/emergency-trigger.service';
 // import { SecurityService } from '../services/security.service';
 
 @Component({
@@ -10,52 +11,75 @@ import { Component } from '@angular/core';
   imports: [CommonModule],
 })
 export class TheftAlertComponent {
-  lastSignal: boolean | null = null;
-  isLoading = false;
-  signalBeingSent: boolean | null = null;
-  showConfirmation = false;
+  startCallLoading = signal(false);
+  stopCallLoading = signal(false);
+  showConfirmation = signal(false);;
+
   statusMessage: {
     type: 'success' | 'error';
     text: string;
     icon: string;
   } | null = null;
 
-  // constructor(private securityService: SecurityService) {}
+  private readonly emergencyService = inject(EmergencyTriggerService);
 
   openConfirmation() {
-    this.showConfirmation = true;
+    this.showConfirmation.set(true);
+  }
+
+  startCall() {
+    this.startCallLoading.set(true);
+    this.statusMessage = null;
+
+    this.emergencyService.startCall().subscribe({
+      next: () => {
+        this.statusMessage = {
+          type: 'success',
+          text: 'Theft reported successfully. Police have been notified.',
+          icon: 'fas fa-phone-alt',
+        };
+        this.startCallLoading.set(false);
+        this.showConfirmation.set(false);
+      },
+      error: () => {
+        this.statusMessage = {
+          type: 'error',
+          text: 'Failed to start call. Please try again.',
+          icon: 'fas fa-times-circle',
+        };
+        this.startCallLoading.set(false);
+        this.showConfirmation.set(false);
+      },
+    });
+  }
+
+  stopCall() {
+    this.stopCallLoading.set(true);
+    this.statusMessage = null;
+
+    this.emergencyService.stopCall().subscribe({
+      next: () => {
+        this.statusMessage = {
+          type: 'success',
+          text: 'Call stopped successfully.',
+          icon: 'fas fa-phone-alt',
+        };
+        this.stopCallLoading.set(false);
+      },
+      error: () => {
+        this.statusMessage = {
+          type: 'error',
+          text: 'Failed to stop call. Please try again.',
+          icon: 'fas fa-times-circle',
+        };
+        this.stopCallLoading.set(false);
+      },
+    });
   }
 
   sendEmergencySignal() {
-    this.sendSignal(true);
-    this.showConfirmation = false;
+    this.startCall();
+    this.showConfirmation.set(false);
   }
 
-  sendSignal(theftDetected: boolean) {
-    this.isLoading = true;
-    this.signalBeingSent = theftDetected;
-    this.statusMessage = null;
-
-    // this.securityService.sendTheftSignal(theftDetected).subscribe({
-    //   next: () => {
-    //     this.lastSignal = theftDetected;
-    //     this.isLoading = false;
-    //     this.statusMessage = {
-    //       type: 'success',
-    //       text: theftDetected
-    //         ? 'Theft reported successfully. Police have been notified.'
-    //         : 'Alert cleared successfully.',
-    //       icon: theftDetected ? 'fas fa-exclamation-circle' : 'fas fa-check-circle'
-    //     };
-    //   },
-    //   error: () => {
-    //     this.isLoading = false;
-    //     this.statusMessage = {
-    //       type: 'error',
-    //       text: 'Failed to send signal. Please try again.',
-    //       icon: 'fas fa-times-circle'
-    //     };
-    //   }
-    // });
-  }
 }
