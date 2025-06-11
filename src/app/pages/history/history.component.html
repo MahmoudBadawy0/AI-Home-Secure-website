@@ -38,6 +38,7 @@
             <th class="py-3 px-6 text-left">Date</th>
             <th class="py-3 px-6 text-center">Image</th>
             <th class="py-3 px-6 text-left">Name</th>
+            <th class="py-3 px-6 text-left">Status</th>
           </tr>
         </thead>
         <tbody>
@@ -58,6 +59,7 @@
                 />
               </td>
               <td class="py-4 px-6">{{ item.name }}</td>
+              <td class="py-4 px-6">{{ item.status }}</td>
             </tr>
           }
         </tbody>
@@ -81,6 +83,7 @@
             <div class="flex-1">
               <p class="text-sm text-gray-400">{{ item.date | date:'medium' }}</p>
               <p class="text-sm font-medium text-white">{{ item.name }}</p>
+              <p class="text-sm text-gray-400">{{ item.status }}</p>
             </div>
           </div>
         </div>
@@ -109,6 +112,7 @@
             />
             <h3 class="text-lg font-semibold text-white mb-2">{{ selectedItem()!.name }}</h3>
             <p class="text-gray-400">{{ selectedItem()!.date | date:'medium' }}</p>
+            <p class="text-gray-400">{{ selectedItem()!.status }}</p>
           </div>
         </div>
       </div>
