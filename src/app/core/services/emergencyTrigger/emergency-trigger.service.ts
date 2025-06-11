@@ -18,4 +18,34 @@ export class EmergencyTriggerService {
       message: 'Call stopped.',
     });
   }
+
+
+
+
+  startCallFire(): Observable<any> {
+    return this.httpClient.post(`${environments.aiUrl}/start-call-fire`, {});
+  }
+
+  stopCallFire(): Observable<any> {
+    return this.httpClient.post(`${environments.aiUrl}/stop-call-fire`, {
+      message: 'Call stopped.',
+    });
+  }
+
+
+
+  
+  startCallGas(): Observable<any> {
+    return this.httpClient.post(`${environments.aiUrl}/start-call-gas`, {});
+  }
+
+  stopCallGas(): Observable<any> {
+    return this.httpClient.post(`${environments.aiUrl}/stop-call-gas`, {
+      message: 'Call stopped.',
+    });
+  }
+
+
+
+
 }

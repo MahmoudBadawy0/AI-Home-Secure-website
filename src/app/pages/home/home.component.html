@@ -1,6 +1,5 @@
-<div class="bg-gray-900 border border-gray-700 flex  min-h-[calc(100vh-75px)] min-h shadow-xl p-4">
-  <div class="w-full self-center ">
-
+<div class="bg-gray-900 border border-gray-700 flex min-h-[calc(100vh-75px)] shadow-xl p-4">
+  <div class="w-full self-center">
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-2">
@@ -12,59 +11,74 @@
         <h3 class="text-lg font-semibold text-white">Living Home Camera</h3>
       </div>
       <div class="flex items-center gap-2">
-        <span class="h-3 w-3 bg-green-500 rounded-full animate-pulse"></span>
-        <span class="text-sm text-gray-400">Active</span>
+        @if (cameraActive) {
+          <span class="h-3 w-3 bg-green-500 rounded-full animate-pulse"></span>
+          <span class="text-sm text-gray-400">Camera Active</span>
+        } @else {
+          <span class="h-3 w-3 bg-red-500 rounded-full"></span>
+          <span class="text-sm text-gray-400">Camera Off</span>
+        }
       </div>
     </div>
 
     <!-- Camera Feed -->
     <div class="relative bg-gray-800 rounded-lg max-w-5xl mx-auto aspect-video mb-4">
-      <!-- Live Feed Placeholder -->
-
       <div class="absolute inset-0 flex items-center justify-center text-gray-400">
         @if (!cameraActive) {
-        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-        </svg>
+          <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
         }
       </div>
-
       <video #videoElement class="w-full h-full object-cover" autoplay playsinline></video>
-
-      <!-- Live Indicator -->
-      <div class="absolute top-2 right-2 bg-red-600 px-2 py-1 rounded-md flex items-center gap-1">
-        <span class="h-2 w-2 bg-white rounded-full animate-pulse"></span>
-        <span class="text-xs font-medium text-white">LIVE</span>
-      </div>
-
+      @if (cameraActive) {
+        <div class="absolute top-2 right-2 bg-red-600 px-2 py-1 rounded-md flex items-center gap-1">
+          <span class="h-2 w-2 bg-white rounded-full animate-pulse"></span>
+          <span class="text-xs font-medium text-white">LIVE</span>
+        </div>
+      }
     </div>
 
     <!-- Controls -->
+    <div class="mt-4 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <button (click)="startCamera()" [disabled]="isCameraLoading() || cameraActive"
+          class="px-4 py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+          @if (isCameraLoading()) {
+            <i class="fas fa-spinner fa-spin mr-2" aria-hidden="true"></i>
+          }
+          Start Camera
+        </button>
+        <button (click)="stopCamera()" [disabled]="isCameraLoading() || !cameraActive"
+          class="px-4 py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+          Stop Camera
+        </button>
+      </div>
 
-    <div class="mt-4 flex items-center justify-end gap-3">
-      <button (click)="toggleCamera()"
-        class="px-4 py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
-        @if (isCameraLoading()) {
-        <i class="fas fa-spinner fa-spin mr-2" aria-hidden="true"></i>
-        }
-        {{ cameraActive ? 'Stop Camera' : 'Start Camera' }}
-      </button>
 
-
-      <button (click)="toggleAIModel()" [disabled]="isAILoading()"
-        class="px-4 py-2 text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
-        @if (isAILoading() ) {
-        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-        }
-        {{ aiModelActive ? 'Stop AI Model' : 'Start AI Model' }}
-      </button>
+      <div class="flex items-center gap-3">
+        <button (click)="startAIModel()" [disabled]="aiLoadingOperation() !== null || aiModelActive"
+          class="px-4 py-2 text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+          @if (aiLoadingOperation() === 'start') {
+            <i class="fas fa-spinner fa-spin mr-2" aria-hidden="true"></i>
+          }
+          Start AI Model
+        </button>
+<!-- [disabled]="aiLoadingOperation() !== null || !aiModelActive" -->
+        <button (click)="stopAIModel()" 
+          class="px-4 py-2 text-white bg-purple-800 hover:bg-purple-700 rounded-lg transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+          @if (aiLoadingOperation() === 'stop') {
+            <i class="fas fa-spinner fa-spin mr-2" aria-hidden="true"></i>
+          }
+          Stop AI Model
+        </button>
+        
+      </div>
     </div>
 
-
     @if (errorMessage) {
-    <div class="mt-2 text-sm text-red-400">{{ errorMessage }}</div>
+      <div class="mt-2 text-sm text-red-400">{{ errorMessage }}</div>
     }
-
   </div>
 </div>

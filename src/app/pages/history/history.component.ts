@@ -1,16 +1,13 @@
 import { HistoryService } from '../../core/services/history/history.service';
 
-import { Component, OnInit } from '@angular/core';
+import { Component, computed, OnInit, signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { IHistory } from '../../core/interfaces/ihistory';
 
-interface Log {
-  id: number;
-  timestamp: string;
-  theftDetected: boolean;
-}
+
 
 @Component({
   selector: 'app-history',
@@ -19,84 +16,85 @@ interface Log {
   styleUrl: './history.component.scss',
 })
 export class HistoryComponent implements OnInit {
-  logs: Log[] = [];
-  filteredLogs: Log[] = [];
-  paginatedLogs: Log[] = [];
-  filterText = '';
-  sortDirection: 'asc' | 'desc' = 'desc';
-  showDetailsModal = false;
-  selectedLog: Log | null = null;
-  currentPage = 1;
-  pageSize = 10;
-  totalPages = 1;
-  pageNumbers: number[] = [];
+  historyItems = signal<IHistory[]>([]);
 
-  constructor(private securityService: HistoryService) {}
+  filterText = signal('');
+
+  selectedItem = signal<IHistory | null>(null);
+
+  sortDirection = signal<'asc' | 'desc'>('desc'); 
+
+  filteredAndSortedItems = computed(() => {
+    const items = this.historyItems();
+    const filter = this.filterText().toLowerCase();
+    let filtered = items.filter((item) =>
+      item.name.toLowerCase().includes(filter)
+    );
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return this.sortDirection() === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+  });
+
+  constructor(private historyService: HistoryService) {}
 
   ngOnInit() {
-    this.fetchLogs();
+    this.fetchHistory();
   }
 
-  fetchLogs() {
-    this.securityService.getTheftLogs().subscribe({
-      next: (logs) => {
-        this.logs = logs;
-        this.filteredLogs = [...logs];
-        // this.updatePagination();
+  fetchHistory() {
+    this.historyService.getHistory().subscribe({
+      next: (items) => {
+        this.historyItems.set(items);
       },
-      error: () => {
-        this.filteredLogs = [];
-        this.paginatedLogs = [];
-        // this.updatePagination();
+      error: (err) => {
+        console.error('Failed to fetch history:', err);
       },
     });
   }
 
-  filterLogs() {
-    const search = this.filterText.toLowerCase();
-    this.filteredLogs = this.logs.filter((log) =>
-      (log.theftDetected ? 'theft reported' : 'no theft')
-        .toLowerCase()
-        .includes(search)
-    );
-    this.currentPage = 1;
-    // this.updatePagination();
-  }
+// fetchHistory() {
+//     // Fake data for testing
+//     const fakeData: IHistory[] = [
+//       {
+//         image: 'https://picsum.photos/id/1/200/300',
+//         date: '2025-06-11T15:30:00Z',
+//         name: 'Suspicious Activity',
+//       },
+//       {
+//         image: 'https://picsum.photos/id/2/200/300',
+//         date: '2025-06-10T12:00:00Z',
+//         name: 'Motion Detected',
+//       },
+//       {
+//         image: 'https://picsum.photos/id/3/200/300',
+//         date: '2025-06-09T09:15:00Z',
+//         name: 'Door Opened',
+//       },
+//       {
+//         image: 'https://picsum.photos/id/4/200/300',
+//         date: '2025-06-08T18:45:00Z',
+//         name: 'Unknown Person',
+//       },
+//     ];
+//     this.historyItems.set(fakeData);
+//   }
 
-  sortLogs(key: keyof Log) {
-    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    this.filteredLogs.sort((a, b) => {
-      const valueA = a[key];
-      const valueB = b[key];
-      if (valueA < valueB) return this.sortDirection === 'asc' ? -1 : 1;
-      if (valueA > valueB) return this.sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-    // this.updatePagination();
-  }
 
-  // updatePagination() {
-  //   this.totalPages = Math.ceil(this.filteredLogs.length / this.pageSize);
-  //   this.currentPage = Math.min(this.currentPage, this.totalPages || 1);
-  //   this.paginatedLogs = this.filteredLogs.slice(
-  //     (this.currentPage - 1) * this.pageSize,
-  //     this.currentPage * this.pageSize
-  //   );
-  //   this.pageNumbers = Array.from({ length: this.totalPages }, (_, i) => i + 1);
-  // }
-
-  // changePage(page: number) {
-  //   if (page >= 1 && page <= this.totalPages) {
-  //     this.currentPage = page;
-  //     this.updatePagination();
-  //   }
-  // }
-
-  openDetailsModal(log: Log) {
-    this.selectedLog = log;
-    this.showDetailsModal = true;
+  toggleSortDirection() {
+    this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
   }
 
 
-  
+  openImageModal(item: IHistory) {
+    this.selectedItem.set(item); 
+  }
+
+  closeImageModal() {
+    this.selectedItem.set(null); 
+  }
+
+
+
 }

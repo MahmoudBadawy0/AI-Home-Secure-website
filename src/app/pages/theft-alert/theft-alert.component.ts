@@ -1,34 +1,70 @@
+// theft-alert.component.ts
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { EmergencyTriggerService } from '../../core/services/emergencyTrigger/emergency-trigger.service';
-// import { SecurityService } from '../services/security.service';
 
 @Component({
   selector: 'app-theft-alert',
+  standalone: true,
   templateUrl: './theft-alert.component.html',
   styleUrls: ['./theft-alert.component.css'],
   imports: [CommonModule],
 })
 export class TheftAlertComponent {
-  startCallLoading = signal(false);
-  stopCallLoading = signal(false);
-  showConfirmation = signal(false);;
+  // Theft signals
+  theftStartCallLoading = signal(false);
+  theftStopCallLoading = signal(false);
+  
+  // Fire signals
+  fireStartCallLoading = signal(false);
+  fireStopCallLoading = signal(false);
+  
+  // Gas signals
+  gasStartCallLoading = signal(false);
+  gasStopCallLoading = signal(false);
+  
+  // Modal control
+  showConfirmation = signal(false);
+  emergencyType: 'theft' | 'fire' | 'gas' | null = null;
 
   statusMessage: {
-    type: 'success' | 'error';
+    type: 'success' | 'error' | 'theft' | 'warning';
     text: string;
     icon: string;
   } | null = null;
 
   private readonly emergencyService = inject(EmergencyTriggerService);
 
-  openConfirmation() {
+  // Get current loading state for modal button
+  getLoadingState(): boolean {
+    if (!this.emergencyType) return false;
+    return this[`${this.emergencyType}StartCallLoading`]();
+  }
+
+  openConfirmation(type: 'theft' | 'fire' | 'gas') {
+    this.emergencyType = type;
     this.showConfirmation.set(true);
   }
 
-  startCall() {
-    this.startCallLoading.set(true);
+  sendEmergencySignal() {
+    if (!this.emergencyType) return;
+    
+    switch (this.emergencyType) {
+      case 'theft': 
+        this.startTheftCall();
+        break;
+      case 'fire':
+        this.startFireCall();
+        break;
+      case 'gas':
+        this.startGasCall();
+        break;
+    }
+  }
+
+  // Theft Emergency Methods
+  startTheftCall() {
+    this.theftStartCallLoading.set(true);
     this.statusMessage = null;
 
     this.emergencyService.startCall().subscribe({
@@ -36,50 +72,143 @@ export class TheftAlertComponent {
         this.statusMessage = {
           type: 'success',
           text: 'Theft reported successfully. Police have been notified.',
-          icon: 'fas fa-phone-alt',
+          icon: 'fas fa-shield-alt',
         };
-        this.startCallLoading.set(false);
-        this.showConfirmation.set(false);
       },
       error: () => {
         this.statusMessage = {
           type: 'error',
-          text: 'Failed to start call. Please try again.',
+          text: 'Failed to report theft. Please try again.',
           icon: 'fas fa-times-circle',
         };
-        this.startCallLoading.set(false);
-        this.showConfirmation.set(false);
       },
+      complete: () => {
+        this.theftStartCallLoading.set(false);
+        this.showConfirmation.set(false);
+      }
     });
   }
 
-  stopCall() {
-    this.stopCallLoading.set(true);
+  stopTheftCall() {
+    this.theftStopCallLoading.set(true);
     this.statusMessage = null;
 
     this.emergencyService.stopCall().subscribe({
       next: () => {
         this.statusMessage = {
           type: 'success',
-          text: 'Call stopped successfully.',
-          icon: 'fas fa-phone-alt',
+          text: 'Theft alert cleared successfully.',
+          icon: 'fas fa-check-circle',
         };
-        this.stopCallLoading.set(false);
       },
       error: () => {
         this.statusMessage = {
           type: 'error',
-          text: 'Failed to stop call. Please try again.',
+          text: 'Failed to clear theft alert. Please try again.',
           icon: 'fas fa-times-circle',
         };
-        this.stopCallLoading.set(false);
       },
+      complete: () => this.theftStopCallLoading.set(false)
     });
   }
 
-  sendEmergencySignal() {
-    this.startCall();
-    this.showConfirmation.set(false);
+  // Fire Emergency Methods
+  startFireCall() {
+    this.fireStartCallLoading.set(true);
+    this.statusMessage = null;
+
+    this.emergencyService.startCallFire().subscribe({
+      next: () => {
+        this.statusMessage = {
+          type: 'success',
+          text: 'Fire reported successfully. Emergency services notified.',
+          icon: 'fas fa-fire-extinguisher',
+        };
+      },
+      error: () => {
+        this.statusMessage = {
+          type: 'error',
+          text: 'Failed to report fire. Please try again.',
+          icon: 'fas fa-times-circle',
+        };
+      },
+      complete: () => {
+        this.fireStartCallLoading.set(false);
+        this.showConfirmation.set(false);
+      }
+    });
   }
 
+  stopFireCall() {
+    this.fireStopCallLoading.set(true);
+    this.statusMessage = null;
+
+    this.emergencyService.stopCallFire().subscribe({
+      next: () => {
+        this.statusMessage = {
+          type: 'success',
+          text: 'Fire alert cleared successfully.',
+          icon: 'fas fa-check-circle',
+        };
+      },
+      error: () => {
+        this.statusMessage = {
+          type: 'error',
+          text: 'Failed to clear fire alert. Please try again.',
+          icon: 'fas fa-times-circle',
+        };
+      },
+      complete: () => this.fireStopCallLoading.set(false)
+    });
+  }
+
+  // Gas Emergency Methods
+  startGasCall() {
+    this.gasStartCallLoading.set(true);
+    this.statusMessage = null;
+
+    this.emergencyService.startCallGas().subscribe({
+      next: () => {
+        this.statusMessage = {
+          type: 'success',
+          text: 'Gas leak reported successfully. Emergency services notified.',
+          icon: 'fas fa-wind',
+        };
+      },
+      error: () => {
+        this.statusMessage = {
+          type: 'error',
+          text: 'Failed to report gas leak. Please try again.',
+          icon: 'fas fa-times-circle',
+        };
+      },
+      complete: () => {
+        this.gasStartCallLoading.set(false);
+        this.showConfirmation.set(false);
+      }
+    });
+  }
+
+  stopGasCall() {
+    this.gasStopCallLoading.set(true);
+    this.statusMessage = null;
+
+    this.emergencyService.stopCallGas().subscribe({
+      next: () => {
+        this.statusMessage = {
+          type: 'success',
+          text: 'Gas alert cleared successfully.',
+          icon: 'fas fa-check-circle',
+        };
+      },
+      error: () => {
+        this.statusMessage = {
+          type: 'error',
+          text: 'Failed to clear gas alert. Please try again.',
+          icon: 'fas fa-times-circle',
+        };
+      },
+      complete: () => this.gasStopCallLoading.set(false)
+    });
+  }
 }
