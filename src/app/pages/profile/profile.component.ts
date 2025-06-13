@@ -5,6 +5,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AuthServiceService } from '../../core/services/authService/auth-service.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ToastrService } from 'ngx-toastr';
+import { IProfile } from '../../core/interfaces/iprofile';
 
 @Component({
   selector: 'app-profile',
@@ -14,47 +15,22 @@ import { ToastrService } from 'ngx-toastr';
 })
 export class ProfileComponent implements OnInit {
   activeTab = 'personal';
-  personalInfoForm: FormGroup;
-  securityForm: FormGroup;
-  profilePreview: string | null = null;
+  profile = signal<IProfile | null>(null);
   isLoading = signal(false);
+  errorMessage = signal<string | null>(null);
+  securityForm: FormGroup;
+  sidebarOpen = signal(false);
 
   private readonly authServiceService = inject(AuthServiceService);
   private readonly toastrService = inject(ToastrService);
+  private readonly fb = inject(FormBuilder);
 
   navigationTabs = [
     { id: 'personal', label: 'Personal Information', icon: 'fas fa-user' },
     { id: 'security', label: 'Security Settings', icon: 'fas fa-shield-alt' },
   ];
 
-  constructor(private fb: FormBuilder) {
-    this.personalInfoForm = this.fb.group(
-      {
-        name: [
-          '',
-          [
-            Validators.required,
-            Validators.minLength(3),
-            Validators.maxLength(20),
-          ],
-        ],
-        email: [
-          '',
-          [
-            Validators.required,
-            Validators.pattern(
-              /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/
-            ),
-          ],
-        ],
-        phone: [
-          '',
-          [Validators.required, Validators.pattern(/^01[0125][0-9]{8}$/)],
-        ],
-      },
-      { updateOn: 'submit' }
-    );
-
+  constructor() {
     this.securityForm = this.fb.group(
       {
         oldPassword: [
@@ -77,45 +53,42 @@ export class ProfileComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.setFormValuesFromToken();
+    this.fetchProfile();
   }
 
-  private setFormValuesFromToken(): void {
-    this.authServiceService.tokenDecode();
-
-    if (this.authServiceService.decodedToken) {
-      this.personalInfoForm.patchValue({
-        name: this.authServiceService.decodedToken.unique_name || '',
-        email: this.authServiceService.decodedToken.email || '',
-        phone: this.authServiceService.decodedToken.phone || '',
-      });
-    }
+  fetchProfile(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    this.authServiceService.getProfile().subscribe({
+      next: (res) => {
+        console.log(res);
+        this.profile.set(res);
+        this.isLoading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        console.error('Failed to fetch profile:', err);
+        this.errorMessage.set('Unable to load profile. Please try again later.');
+        this.isLoading.set(false);
+        // Fallback to fake data
+        this.profile.set({
+          image: 'https://picsum.photos/seed/picsum/200/300',
+          name: 'John Doe',
+          email: 'john.doe@example.com',
+          phone: '+201012345678',
+        });
+      },
+    });
   }
 
   setActiveTab(tabId: string): void {
     this.activeTab = tabId;
-  }
-
-  sidebarOpen = false;
-  toggleSidebar() {
-    this.sidebarOpen = !this.sidebarOpen;
-  }
-
-  onFileChange(event: any): void {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.profilePreview = e.target.result;
-      };
-      reader.readAsDataURL(file);
+    if (this.sidebarOpen()) {
+      this.toggleSidebar();
     }
   }
 
-  onSubmit(): void {
-    if (this.personalInfoForm.valid) {
-      console.log('Personal Info Form:', this.personalInfoForm.value);
-    }
+  toggleSidebar(): void {
+    this.sidebarOpen.set(!this.sidebarOpen());
   }
 
   onSecuritySubmit(): void {
@@ -125,16 +98,15 @@ export class ProfileComponent implements OnInit {
         .changePassword(this.securityForm.value)
         .subscribe({
           next: (res) => {
-            console.log('res', res);
-            this.isLoading.set(false);
             this.toastrService.success(res, 'Success');
+            this.isLoading.set(false);
             setTimeout(() => {
               this.securityForm.reset();
             }, 500);
           },
           error: (err: HttpErrorResponse) => {
-            console.error('Login error', err);
-            this.toastrService.error('failed. Please try again.', 'Error');
+            console.error('Change password error:', err);
+            this.toastrService.error('Failed. Please try again.', 'Error');
             this.isLoading.set(false);
           },
         });

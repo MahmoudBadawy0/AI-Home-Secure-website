@@ -1,6 +1,6 @@
 <div class="flex flex-col lg:flex-row min-h-screen bg-gray-900">
   <!-- Mobile Menu Button -->
-  <button class="lg:hidden  border-b border-gray-500   p-4 text-gray-400 hover:text-gray-200 focus:outline-none"
+  <button class="lg:hidden border-b border-gray-500 p-4 text-gray-400 hover:text-gray-200 focus:outline-none"
     (click)="toggleSidebar()">
     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -10,8 +10,9 @@
   <!-- Sidebar -->
   <nav
     class="fixed lg:relative lg:block w-full lg:w-64 bg-gray-800 shadow-xl border-r border-gray-700 transform transition-transform duration-300 z-50"
-    [class]="sidebarOpen ? 'block' : 'hidden lg:block'">
+    [ngClass]="{'block': sidebarOpen(), 'hidden lg:block': !sidebarOpen()}">
     <div class="p-2 lg:p-4 lg:mt-6">
+      
       <!-- Close Button for Mobile -->
       <div class="flex justify-end lg:hidden p-3">
         <button class="text-gray-400 hover:text-gray-200" (click)="toggleSidebar()">
@@ -22,14 +23,15 @@
       </div>
 
       <div class="space-y-2">
-        @for (tab of navigationTabs; track $index) {
-        <button [class.bg-indigo-600]="activeTab === tab.id" [class.text-white]="activeTab === tab.id"
-          [class.text-gray-300]="activeTab !== tab.id" [class.hover:bg-gray-700]="activeTab !== tab.id"
-          (click)="setActiveTab(tab.id)"
-          class="w-full p-3 text-left rounded-lg transition-colors duration-200 flex items-center">
-          <i [class]="tab.icon" class="mr-3 text-lg"></i>
-          <span class="font-medium text-sm lg:text-base">{{ tab.label }}</span>
-        </button>
+        @for (tab of navigationTabs; track tab.id) {
+          <button [ngClass]="{
+            'bg-indigo-600 text-white': activeTab === tab.id,
+            'text-gray-300 hover:bg-gray-700': activeTab !== tab.id
+          }" (click)="setActiveTab(tab.id)"
+            class="w-full p-3 text-left rounded-lg transition-colors duration-200 flex items-center">
+            <i [class]="tab.icon" class="mr-3 text-lg"></i>
+            <span class="font-medium text-sm lg:text-base">{{ tab.label }}</span>
+          </button>
         }
       </div>
     </div>
@@ -37,176 +39,138 @@
 
   <!-- Overlay for Mobile -->
   <div class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden transition-opacity duration-300"
-    [class]="sidebarOpen ? 'block' : 'hidden'" (click)="toggleSidebar()"></div>
+    [ngClass]="{'block': sidebarOpen(), 'hidden': !sidebarOpen()}" (click)="toggleSidebar()"></div>
 
   <!-- Main Content -->
   <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-gray-900">
     <!-- Personal Information Section -->
     @if (activeTab === 'personal') {
-    <div class="max-w-2xl mx-auto bg-gray-800 p-4 sm:p-6 lg:p-8 rounded-xl shadow-sm border border-gray-700">
-      <h2 class="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Personal Information</h2>
+      <div class="max-w-lg mx-auto">
+        <!-- Header -->
+        <header class="mb-6 text-center">
+          <h2 class="text-xl sm:text-2xl font-bold text-white mb-2">Personal Information</h2>
+          <p class="text-sm text-gray-400">View your account details</p>
+        </header>
 
-      <form [formGroup]="personalInfoForm" (ngSubmit)="onSubmit()" class="space-y-4 sm:space-y-6">
-        <!-- Name Input -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Name</label>
-          <input formControlName="name" type="text" name="name" placeholder="Enter your name"
-            class="mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 text-sm sm:text-base placeholder-gray-400" />
+        <!-- Error Message -->
+        @if (errorMessage()) {
+          <div class="mb-6 text-center bg-red-900/50 text-red-400 rounded-lg p-4 flex items-center justify-center gap-2">
+            <i class="fas fa-exclamation-circle"></i>
+            {{ errorMessage() }}
+            <button (click)="fetchProfile()" class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700" aria-label="Retry loading profile">
+              Retry
+            </button>
+          </div>
+        }
 
-          <!-- Error Messages -->
-          @let nameControl = personalInfoForm.get('name');
-          @if (nameControl?.errors && nameControl?.touched) {
-          <div class="flex items-start py-2 px-3 mt-2 text-sm text-red-500 rounded-lg bg-red-900/50" role="alert">
-            <svg class="shrink-0 w-5 h-5 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-              viewBox="0 0 20 20">
-              <path
-                d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-            </svg>
-            <div>
-              @if (nameControl?.getError('required')) {
-              <p>Name is required.</p>
-              }
-              @if (nameControl?.getError('minlength') || nameControl?.getError('maxlength')) {
-              <p>Name must be between 3-20 characters.</p>
-              }
+        <!-- Loading State -->
+        @if (isLoading()) {
+          <div class="flex justify-center items-center h-64">
+            <i class="fas fa-spinner fa-spin text-indigo-400 text-4xl"></i>
+          </div>
+        }
+
+        <!-- Profile Card -->
+        @if (profile() && !isLoading()) {
+          <div class="bg-gray-800 rounded-xl shadow-md shadow-gray-900/50 p-6 border border-gray-700">
+            <div class="flex flex-col items-center">
+              <img
+                [src]="profile()!.image"
+                [alt]="profile()!.name"
+                class="w-32 h-32 rounded-full object-cover border-4 border-indigo-500 mb-4"
+              />
+              <h3 class="text-xl font-semibold text-white mb-2">{{ profile()!.name }}</h3>
+              <div class="text-center space-y-2">
+                <div class="flex items-center gap-2 text-gray-300">
+                  <i class="fas fa-envelope"></i>
+                  <span>{{ profile()!.email }}</span>
+                </div>
+                <div class="flex items-center gap-2 text-gray-300">
+                  <i class="fas fa-phone"></i>
+                  <span>{{ profile()!.phone }}</span>
+                </div>
+              </div>
             </div>
           </div>
-          }
-        </div>
-
-        <!-- Email Input -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
-          <input formControlName="email" type="email" placeholder="Enter your email"
-            class="mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 text-sm sm:text-base placeholder-gray-400" />
-
-          <!-- Error Messages -->
-          @let emailControl = personalInfoForm.get('email');
-          @if (emailControl?.errors && emailControl?.touched) {
-          <div class="flex items-start py-2 px-3 mt-2 text-sm text-red-500 rounded-lg bg-red-900/50" role="alert">
-            <svg class="shrink-0 w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-            </svg>
-            <div>
-              @if (emailControl?.getError('required')) {
-              <p>Email is required.</p>
-              }
-              @if (emailControl?.getError('pattern')) {
-              <p>Please enter a valid email address.</p>
-              }
-            </div>
-          </div>
-          }
-        </div>
-
-        <!-- Phone Input -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Phone Number</label>
-          <input formControlName="phone" type="tel" placeholder="Enter your phone number"
-            class="mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 text-sm sm:text-base placeholder-gray-400" />
-
-          <!-- Error Messages -->
-          @let phoneControl = personalInfoForm.get('phone');
-          @if (phoneControl?.errors && phoneControl?.touched) {
-          <div class="flex items-start py-2 px-3 mt-2 text-sm text-red-500 rounded-lg bg-red-900/50" role="alert">
-            <svg class="shrink-0 w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-            </svg>
-            <div>
-              @if (phoneControl?.getError('required')) {
-              <p>Phone number is required.</p>
-              }
-              @if (phoneControl?.getError('pattern')) {
-              <p>Accept only Egyptian phone numbers starting with 010, 011, 012, or 015.</p>
-              }
-            </div>
-          </div>
-          }
-        </div>
-
-        <button [disabled]="isLoading()" type="submit" class="form-btn">
-          @if (isLoading()) {
-          <i class="fas fa-spinner fa-spin me-2" aria-hidden="true"></i>
-          }
-          Save Changes
-        </button>
-
-      </form>
-    </div>
+        }
+      </div>
     }
 
     <!-- Security Section -->
     @if (activeTab === 'security') {
-    <div class="max-w-2xl mx-auto">
-      <div class="bg-gray-800 p-4 sm:p-6 lg:p-8 rounded-xl shadow-sm border border-gray-700">
-        <h2 class="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Change Password</h2>
+      <div class="max-w-lg mx-auto">
+        <header class="mb-6 text-center">
+          <h2 class="text-xl sm:text-2xl font-bold text-white mb-2">Security Settings</h2>
+          <p class="text-sm text-gray-400">Change your password</p>
+        </header>
 
-        <form [formGroup]="securityForm" (ngSubmit)="onSecuritySubmit()" class="space-y-4 sm:space-y-5">
-          <!-- Current Password -->
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">Current Password</label>
-            <input formControlName="oldPassword" type="password" placeholder="********"
-              class="mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 text-sm sm:text-base placeholder-gray-400" />
+        <div class="bg-gray-800 p-4 sm:p-6 lg:p-8 rounded-xl shadow-sm border border-gray-700">
+          <h2 class="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Change Password</h2>
 
-            <!-- Error Messages -->
-            @let passwordControl = securityForm.get('oldPassword');
-            @if (passwordControl?.errors && passwordControl?.touched) {
-            <div class="flex items-start py-2 px-3 mt-2 text-sm text-red-500 rounded-lg bg-red-900/50" role="alert">
-              <svg class="shrink-0 w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-              </svg>
-              <div>
-                @if (passwordControl?.getError('required')) {
-                <p>Password is required.</p>
-                }
-                @if (passwordControl?.getError('pattern')) {
-                <p>Password must be at least 8 characters, contain one uppercase letter and one special character.</p>
-                }
-              </div>
+          <form [formGroup]="securityForm" (ngSubmit)="onSecuritySubmit()" class="space-y-4 sm:space-y-5">
+            <!-- Current Password -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-1" for="oldPassword">Current Password</label>
+              <input formControlName="oldPassword" type="password" id="oldPassword" placeholder="********"
+                class="mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 text-sm sm:text-base placeholder-gray-400" />
+
+              <!-- Error Messages -->
+              @let passwordControl = securityForm.get('oldPassword');
+              @if (passwordControl?.errors && passwordControl?.touched) {
+                <div class="flex items-start py-2 px-3 mt-2 text-sm text-red-500 rounded-lg bg-red-900/50" role="alert">
+                  <svg class="shrink-0 w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                  </svg>
+                  <div>
+                    @if (passwordControl?.getError('required')) {
+                      <p>Password is required.</p>
+                    }
+                    @if (passwordControl?.getError('pattern')) {
+                      <p>Password must be at least 8 characters, contain one uppercase letter and one special character.</p>
+                    }
+                  </div>
+                </div>
+              }
             </div>
-            }
-          </div>
 
-          <!-- New Password -->
-          <div>
-            <label class="block text-sm font-medium text-gray-300 mb-1">New Password</label>
-            <input formControlName="newPassword" type="password" placeholder="********"
-              class="mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 text-sm sm:text-base placeholder-gray-400" />
+            <!-- New Password -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-1" for="newPassword">New Password</label>
+              <input formControlName="newPassword" type="password" id="newPassword" placeholder="********"
+                class="mt-1 block w-full rounded-lg border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 text-sm sm:text-base placeholder-gray-400" />
 
-            <!-- Error Messages -->
-            @let newPasswordControl = securityForm.get('newPassword');
-            @if (newPasswordControl?.errors && newPasswordControl?.touched) {
-            <div class="flex items-start py-2 px-3 mt-2 text-sm text-red-500 rounded-lg bg-red-900/50" role="alert">
-              <svg class="shrink-0 w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-              </svg>
-              <div>
-                @if (newPasswordControl?.getError('required')) {
-                <p>Password is required.</p>
-                }
-                @if (newPasswordControl?.getError('pattern')) {
-                <p>Password must be at least 8 characters, contain one uppercase letter and one special character.</p>
-                }
-              </div>
+              <!-- Error Messages -->
+              @let newPasswordControl = securityForm.get('newPassword');
+              @if (newPasswordControl?.errors && newPasswordControl?.touched) {
+                <div class="flex items-start py-2 px-3 mt-2 text-sm text-red-500 rounded-lg bg-red-900/50" role="alert">
+                  <svg class="shrink-0 w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                  </svg>
+                  <div>
+                    @if (newPasswordControl?.getError('required')) {
+                      <p>Password is required.</p>
+                    }
+                    @if (newPasswordControl?.getError('pattern')) {
+                      <p>Password must be at least 8 characters, contain one uppercase letter and one special character.</p>
+                    }
+                  </div>
+                </div>
+              }
             </div>
-            }
-          </div>
 
-          <button [disabled]="isLoading()" type="submit" class="form-btn">
-            @if (isLoading()) {
-            <i class="fas fa-spinner fa-spin me-2" aria-hidden="true"></i>
-            }
-            Update Password
-          </button>
-
-
-        </form>
+            <button [disabled]="isLoading()" type="submit"
+              class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+              @if (isLoading()) {
+                <i class="fas fa-spinner fa-spin me-2" aria-hidden="true"></i>
+              }
+              Update Password
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
     }
+    
   </div>
 </div>

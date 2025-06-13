@@ -25,7 +25,10 @@ export class ImageUploadComponent {
   uploadedImage = signal<File | undefined>(undefined);
 
   cameraActive = signal(false);
-  errorMessage = '';
+  errorMessage = signal<string | null>(null); 
+
+  familyRoles = signal<string[]>(['Father', 'Mother', 'Son', 'Daughter']); 
+  selectedFamilyRole = signal<string>(''); 
 
   private mediaStream: MediaStream | null = null;
 
@@ -36,7 +39,6 @@ export class ImageUploadComponent {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   @ViewChild('canvasElement') canvasElement!: ElementRef<HTMLCanvasElement>;
 
-  private readonly http: HttpClient = inject(HttpClient);
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -65,9 +67,9 @@ export class ImageUploadComponent {
       });
       this.videoElement.nativeElement.srcObject = this.mediaStream;
       this.cameraActive.set(true);
-      this.errorMessage = '';
+      this.errorMessage.set(null);
     } catch (error) {
-      this.errorMessage = 'Camera access denied or not available';
+      this.errorMessage.set('Camera access denied or not available');
       this.cameraActive.set(false);
     }
   }
@@ -88,7 +90,6 @@ export class ImageUploadComponent {
     }
   }
 
-  // Modified capture method
   capture() {
     const video = this.videoElement.nativeElement;
     const canvas = this.canvasElement.nativeElement;
@@ -111,23 +112,23 @@ export class ImageUploadComponent {
     }, 'image/jpeg');
   }
 
-  //handle validation
   hasValidSubmission(): boolean {
-    return !!this.image() && this.userName().trim().length > 2;
+    return !!this.image() && this.userName().trim().length > 2 && !!this.selectedFamilyRole();
   }
 
-  // Modified clearAll
+
   clearAll() {
     this.image.set(null);
     this.uploadedImage.set(undefined);
     this.userName.set('');
+    this.selectedFamilyRole.set('');
     this.stopCamera();
     if (this.fileInput?.nativeElement) {
       this.fileInput.nativeElement.value = '';
     }
   }
 
-  // Implement upload logic
+  
 
   uploadImage() {
     if (!this.hasValidSubmission()) return;
@@ -135,6 +136,8 @@ export class ImageUploadComponent {
     const formData = new FormData();
     formData.append('image', this.uploadedImage()!);
     formData.append('memberName', this.userName().trim());
+    formData.append('relation', this.selectedFamilyRole()); 
+
     this.isLoading.set(true);
 
     this.uploadService.uploadImage(formData).subscribe({
@@ -148,7 +151,7 @@ export class ImageUploadComponent {
         this.toastrService.error('failed. Please try again.', 'Error');
         this.isLoading.set(false);
         console.error('Upload failed:', err);
-        this.errorMessage = 'Upload failed. Please try again.';
+        this.errorMessage.set('Upload failed. Please try again.');
       },
     });
   }

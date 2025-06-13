@@ -15,7 +15,7 @@ export const routes: Routes = [
   {
     path: '',
     component: AuthLayoutComponent,
-    canActivate: [logedGuard],
+    // canActivate: [logedGuard],
     children: [
       {
         path: 'login',
@@ -48,7 +48,7 @@ export const routes: Routes = [
   {
     path: '',
     component: MainLayoutComponent,
-    canActivate: [authGuard],
+    // canActivate: [authGuard],
     children: [
       {
         path: 'home',

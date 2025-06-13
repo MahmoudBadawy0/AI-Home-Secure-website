@@ -1,6 +1,14 @@
 <div class="bg-gray-900 border border-gray-700 shadow-xl p-5 min-h-[calc(100vh-75px)]">
   <h3 class="text-lg font-semibold text-white mb-2">Upload image</h3>
 
+  <!-- Error Message -->
+  @if (errorMessage()) {
+    <div class="mb-6 bg-red-900/50 text-red-400 rounded-lg p-4 flex items-center">
+      <i class="fas fa-exclamation-circle mr-2"></i>
+      {{ errorMessage() }}
+    </div>
+  }
+
 
   <div class="max-w-lg mx-auto space-y-6">
 
@@ -43,6 +51,17 @@
       <input type="text" [(ngModel)]="userName"
         class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-indigo-500 focus:border-indigo-500"
         placeholder="Enter your name">
+    </div>
+<!-- familyRole -->
+    <div>
+      <label for="familyRole" class="block text-sm font-medium text-gray-300 mb-2">Family Role</label>
+      <select id="familyRole" [(ngModel)]="selectedFamilyRole" (ngModelChange)="selectedFamilyRole.set($event)"
+        class="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white focus:ring-indigo-500 focus:border-indigo-500">
+        <option value="" disabled selected>Select a family role</option>
+        @for (role of familyRoles(); track role) {
+          <option [value]="role">{{ role }}</option>
+        }
+      </select>
     </div>
 
     <!-- Upload Controls -->

@@ -1,10 +1,11 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Inject, inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
 import { Router } from '@angular/router';
 import { environments } from '../../environments/environments';
 import { isPlatformBrowser } from '@angular/common';
+import { IProfile } from '../../interfaces/iprofile';
 
 @Injectable({
   providedIn: 'root',
@@ -80,27 +81,9 @@ export class AuthServiceService {
     );
   }
 
-  // forgot password
-  // verify email and send code to email
-  // setVerifyEmail(data: object): Observable<any> {
-  //   return this.httpClient.post(
-  //     `${environments.baseUrl}/api/v1/auth/forgotPasswords`,
-  //     data
-  //   );
-  // }
 
-  // setVerifyCode(data: object): Observable<any> {
-  //   return this.httpClient.post(
-  //     `${environments.baseUrl}/api/v1/auth/verifyResetCode`,
-  //     data
-  //   );
-  // }
-
-  // resetPassword(data: object): Observable<any> {
-  //   return this.httpClient.put(
-  //     `${environments.baseUrl}/api/v1/auth/resetPassword`,
-  //     data
-  //   );
-  // }
+  getProfile(): Observable<any> {
+    return this.httpClient.get(`${environments.baseUrl}/api/Profile/static`)
+  }
   
 }
