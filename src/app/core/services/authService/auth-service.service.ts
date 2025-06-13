@@ -83,7 +83,18 @@ export class AuthServiceService {
 
 
   getProfile(): Observable<any> {
-    return this.httpClient.get(`${environments.baseUrl}/api/Profile/static`)
+    let token: string | null = null;
+    if (isPlatformBrowser(this.platformId)) {
+      token = localStorage.getItem('token');
+    }
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+    });
+    return this.httpClient.get(`${environments.baseUrl}/api/Profile/static`,{
+      headers,
+      withCredentials: true,
+    })
   }
   
 }
