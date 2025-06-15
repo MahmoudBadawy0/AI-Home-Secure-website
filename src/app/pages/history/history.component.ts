@@ -61,21 +61,28 @@ export class HistoryComponent implements OnInit {
 //         image: 'https://picsum.photos/id/1/200/300',
 //         date: '2025-06-11T15:30:00Z',
 //         name: 'Suspicious Activity',
+//         status:"fake",
 //       },
 //       {
 //         image: 'https://picsum.photos/id/2/200/300',
 //         date: '2025-06-10T12:00:00Z',
 //         name: 'Motion Detected',
+//         status:"fake",
+
 //       },
 //       {
 //         image: 'https://picsum.photos/id/3/200/300',
 //         date: '2025-06-09T09:15:00Z',
 //         name: 'Door Opened',
+//         status:"fake",
+
 //       },
 //       {
 //         image: 'https://picsum.photos/id/4/200/300',
 //         date: '2025-06-08T18:45:00Z',
 //         name: 'Unknown Person',
+//         status:"fake",
+
 //       },
 //     ];
 //     this.historyItems.set(fakeData);
